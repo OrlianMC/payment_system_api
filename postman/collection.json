@@ -1,0 +1,133 @@
+{
+    "info": {
+        "name": "Sistema de Pagos API",
+        "_postman_id": "12345678-abcd-efgh-ijkl-9876543210ab",
+        "description": "Colección de prueba técnica para API de pagos",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "Health Check",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "http://localhost:8000/health",
+                    "protocol": "http",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "8000",
+                    "path": [
+                        "health"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Crear Usuario",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"email\": \"user3@test.com\",\n  \"password\": \"123456\"\n}"
+                },
+                "url": {
+                    "raw": "http://localhost:8000/api/users",
+                    "protocol": "http",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "8000",
+                    "path": [
+                        "api",
+                        "users"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Registrar Tarjeta",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"user_id\": 1,\n  \"masked_number\": \"**** **** **** 5555\"\n}"
+                },
+                "url": {
+                    "raw": "http://localhost:8000/api/cards",
+                    "protocol": "http",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "8000",
+                    "path": [
+                        "api",
+                        "cards"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Crear Pago",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"user_id\": 1,\n  \"card_id\": 1,\n  \"amount\": 120.50\n}"
+                },
+                "url": {
+                    "raw": "http://localhost:8000/api/payments",
+                    "protocol": "http",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "8000",
+                    "path": [
+                        "api",
+                        "payments"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Historial de Pagos",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "http://localhost:8000/api/payments/user/1",
+                    "protocol": "http",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "8000",
+                    "path": [
+                        "api",
+                        "payments",
+                        "user",
+                        "1"
+                    ]
+                }
+            }
+        }
+    ]
+}
