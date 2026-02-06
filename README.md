@@ -43,9 +43,17 @@ payment-system/
 │   └── requirements.txt
 │
 ├── payment_processor/
-│   ├── app/
-│   │   └── main.py
-│   └── requirements.txt
+├── app/
+│   ├── main.py
+│   ├── core/
+│   │   ├── config.py     
+│   │   └── logging.py
+│   ├── models/
+│   │   └── payment.py        
+│   ├── services/
+│   │   └── payment_service.py
+│   └── routes/
+│       └── payment_routes.py
 │
 ├── database/
 │   ├── init.sql

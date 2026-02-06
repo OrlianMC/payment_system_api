@@ -3,6 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import logging
 
+from fastapi.responses import RedirectResponse
+
 from app.core.logging import setup_logging
 from app.core.database import create_db_and_tables
 
@@ -26,17 +28,18 @@ logger = logging.getLogger(__name__)
 # --------------------------------------------------
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("🚀 Iniciando aplicación...")
+    logger.info("🚀 Starting payment system API...")
     create_db_and_tables()
+    logger.info("📦 Database initialized successfully")
     yield
-    logger.info("🛑 Cerrando aplicación...")
+    logger.info("🛑 Shutting down payment system API...")
 
 
 # --------------------------------------------------
 # ⚙️ App
 # --------------------------------------------------
 app = FastAPI(
-    title="Sistema de Pagos",
+    title="Payment System API",
     version="1.0.0",
     lifespan=lifespan,
 )
@@ -55,11 +58,13 @@ app.add_middleware(
 # --------------------------------------------------
 # 🔗 Routers
 # --------------------------------------------------
-app.include_router(auth_router.router, prefix="/auth", tags=["Auth"])
-app.include_router(user_router.router, prefix="/users", tags=["Users"])
-app.include_router(profile_router.router, prefix="/profiles", tags=["Profiles"])
-app.include_router(card_router.router, prefix="/cards", tags=["Cards"])
-app.include_router(payment_router.router, prefix="/payments", tags=["Payments"])
+app.include_router(auth_router.router)
+app.include_router(user_router.router)
+app.include_router(profile_router.router)
+app.include_router(card_router.router)
+app.include_router(payment_router.router)
+
+logger.info("🔗 API routers registered successfully")
 
 
 # --------------------------------------------------
@@ -70,4 +75,12 @@ def health():
     return {"status": "ok"}
 
 
-logger.info("✅ Configuración principal cargada")
+# --------------------------------------------------
+# 🔄 Redirect Docs
+# --------------------------------------------------
+@app.get("/")
+def root():
+    return RedirectResponse(url="/docs")
+
+
+logger.info("✅ Main configuration loaded successfully")

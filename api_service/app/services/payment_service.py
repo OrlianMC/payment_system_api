@@ -2,16 +2,15 @@ from sqlmodel import Session, select
 from fastapi import HTTPException, status
 from datetime import datetime, timezone
 from typing import Optional, List
+import logging
 
-from app.models import Payment, PaymentStatus
+from app.models import Payment, PaymentStatus, User
 from app.schemas import PaymentCreate, PaymentRead
-from app.services import CardService, PaymentProcessorClient
+from .card_service import CardService
+from .processor_client import PaymentProcessorClient
 
 
 class PaymentService:
-    """
-    Service de pagos que se comunica con un PaymentProcessor externo.
-    """
 
     def __init__(self, session: Session):
         self.session = session
@@ -19,29 +18,29 @@ class PaymentService:
         self.card_service = CardService()
 
     async def create_payment(
-        self,
-        current_user,
-        payment_data: PaymentCreate
+        self, current_user: User, payment_data: PaymentCreate
     ) -> PaymentRead:
-        """Crear un pago y procesarlo vía microservicio"""
 
-        # Validaciones básicas
         if payment_data.amount <= 0:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="El monto del pago debe ser mayor a 0"
+                detail="The payment amount must be greater than 0",
             )
 
-        card = self.card_service.get_card(self.session, payment_data.card_id)
-        if card.user_id != current_user.id:
+        card = self.card_service.get_card(
+            self.session, payment_data.card_id, current_user
+        )
+        if current_user.role != "admin" and card.user_id != current_user.id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="La tarjeta no pertenece al usuario"
+                detail="The card does not belong to the user",
             )
 
-        if payment_data.model_dump().get("idempotency_key"):
+        if getattr(payment_data, "idempotency_key", None):
             existing = self.session.exec(
-                select(Payment).where(Payment.idempotency_key == payment_data.idempotency_key)
+                select(Payment).where(
+                    Payment.idempotency_key == payment_data.idempotency_key
+                )
             ).first()
             if existing:
                 return PaymentRead.model_validate(existing)
@@ -52,7 +51,7 @@ class PaymentService:
             amount=payment_data.amount,
             currency=payment_data.currency,
             status=PaymentStatus.pending,
-            idempotency_key=getattr(payment_data, "idempotency_key", None)
+            idempotency_key=getattr(payment_data, "idempotency_key", None),
         )
 
         self.session.add(payment)
@@ -76,36 +75,42 @@ class PaymentService:
 
         return PaymentRead.model_validate(payment)
 
-    def get_payment(self, payment_id: int, current_user) -> PaymentRead:
+    def get_payment(self, payment_id: int, current_user: User) -> PaymentRead:
         payment = self.session.get(Payment, payment_id)
         if not payment or payment.deleted_at:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Pago no encontrado")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Payment not found"
+            )
 
         if current_user.role != "admin" and payment.user_id != current_user.id:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acceso denegado")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have permission to access this payment",
+            )
 
         return PaymentRead.model_validate(payment)
 
-    def list_payments(self, current_user, user_id: Optional[int] = None) -> List[PaymentRead]:
+    def list_payments(self, current_user: User) -> List[PaymentRead]:
         statement = select(Payment).where(Payment.deleted_at == None)
 
-        if user_id:
-            if current_user.role != "admin" and user_id != current_user.id:
-                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acceso denegado")
-            statement = statement.where(Payment.user_id == user_id)
-        elif current_user.role != "admin":
+        if current_user.role != "admin":
             statement = statement.where(Payment.user_id == current_user.id)
 
         payments = self.session.exec(statement).all()
         return [PaymentRead.model_validate(p) for p in payments]
 
-    def delete_payment(self, payment_id: int, current_user) -> PaymentRead:
+    def delete_payment(self, payment_id: int, current_user: User) -> PaymentRead:
         payment = self.session.get(Payment, payment_id)
         if not payment or payment.deleted_at:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Pago no encontrado")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Payment not found"
+            )
 
         if current_user.role != "admin" and payment.user_id != current_user.id:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acceso denegado")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have permission to delete this payment",
+            )
 
         payment.deleted_at = datetime.now(timezone.utc)
         self.session.add(payment)

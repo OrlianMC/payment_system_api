@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 from sqlmodel import SQLModel
 from app.models import UserRole
 
@@ -16,8 +17,10 @@ class UserPasswordReset(SQLModel):
     current_password: str
 
 
-class UserUpdate(UserCreate):
-    pass
+class UserUpdate(UserBase):
+    email: Optional[str]
+    role: Optional[UserRole]
+    is_active: Optional[bool]
 
 
 class UserLogin(UserBase):

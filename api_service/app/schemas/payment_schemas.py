@@ -9,6 +9,7 @@ class PaymentCreate(SQLModel):
     card_id: int
     amount: float
     currency: str = "USD"
+    idempotency_key: str
 
 
 class PaymentRead(SQLModel):

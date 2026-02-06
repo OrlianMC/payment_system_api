@@ -1,33 +1,34 @@
 import httpx
 from fastapi import HTTPException, status
 from typing import Dict
+import logging
+from app.services.auth_service import AuthService
 from app.core.config import settings
 
 
 class PaymentProcessorClient:
-    """
-    Cliente para comunicarse con el microservicio externo de procesamiento de pagos.
-    """
 
     def __init__(self, base_url: str = settings.PROCESSOR_URL):
         self.base_url = base_url.rstrip("/")
 
     async def process_payment(self, amount: float) -> Dict:
-        """
-        Envía la solicitud de pago al microservicio externo.
-        Devuelve un dict con:
-            {
-                "status": "approved" | "rejected",
-                "reference": "xxxx"  # opcional
-            }
-        """
 
         payload = {"amount": amount}
+
+        internal_token = AuthService.create_service_token(service_name="main-backend")
+        logging.info(f"Generated internal token for payment processor: {internal_token}")
+        logging.info("💛"*85)
+        headers = {
+            "Authorization": f"Bearer {internal_token}",
+            "Content-Type": "application/json",
+        }
 
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:
                 response = await client.post(
-                    f"{self.base_url}/process-payment", json=payload
+                    f"{self.base_url}/process-payment/",
+                    json=payload,
+                    headers=headers,
                 )
                 response.raise_for_status()
                 data = response.json()

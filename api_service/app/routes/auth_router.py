@@ -4,6 +4,8 @@ from app.services.auth_service import AuthService, UserService
 from app.schemas import UserCreate, UserRead, UserPasswordReset
 from app.core.database import get_session
 
+from fastapi.security import OAuth2PasswordRequestForm
+
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
 
@@ -13,14 +15,28 @@ def register(user_data: UserCreate, session: Session = Depends(get_session)):
 
 
 @router.post("/login")
-def login(user_data: UserCreate, session: Session = Depends(get_session)):
-    user = AuthService.authenticate_user(session, user_data.email, user_data.password)
+def login(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    session: Session = Depends(get_session),
+):
+
+    user = AuthService.authenticate_user(
+        session,
+        email=form_data.username,
+        password=form_data.password,
+    )
+
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Credenciales inválidas"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Not valid credentials"
         )
+
     token = AuthService.create_access_token(user.id)
-    return {"access_token": token, "token_type": "bearer"}
+
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+    }
 
 
 @router.post("/change-password", response_model=UserRead)

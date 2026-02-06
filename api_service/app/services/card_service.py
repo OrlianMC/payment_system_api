@@ -3,21 +3,25 @@ from fastapi import HTTPException, status
 from datetime import datetime, timezone
 from typing import List
 
-from app.models import Card
-from app.schemas import CardCreate, CardRead
+from app.models import Card, User
+from app.schemas import CardCreate, CardRead, CardUpdate
 
 
 class CardService:
 
     @staticmethod
     def mask_card(number: str):
-        """Genera last_four y masked_number de la tarjeta"""
         last_four = number[-4:]
         masked = "**** **** **** " + last_four
         return last_four, masked
 
     @staticmethod
-    def create_card(session: Session, data: CardCreate) -> CardRead:
+    def create_card(session: Session, data: CardCreate, current_user: User) -> CardRead:
+        if current_user.role != "admin" and current_user.id != data.user_id:
+            raise HTTPException(
+                status_code=403, detail="You do not have permission to create this card"
+            )
+
         last_four, masked = CardService.mask_card(data.card_number)
         card = Card(
             user_id=data.user_id,
@@ -34,28 +38,41 @@ class CardService:
         return CardRead.model_validate(card)
 
     @staticmethod
-    def get_card(session: Session, card_id: int) -> CardRead:
+    def get_card(session: Session, card_id: int, current_user: User) -> CardRead:
         card = session.get(Card, card_id)
         if not card or card.deleted_at:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Card not found"
             )
+
+        if current_user.role != "admin" and card.user_id != current_user.id:
+            raise HTTPException(
+                status_code=403, detail="You do not have permission to view this card"
+            )
+
         return CardRead.model_validate(card)
 
     @staticmethod
-    def list_cards(session: Session, user_id: int = None) -> List[CardRead]:
+    def list_cards(session: Session, current_user: User) -> List[CardRead]:
         statement = select(Card).where(Card.deleted_at == None)
-        if user_id:
-            statement = statement.where(Card.user_id == user_id)
+        if current_user.role != "admin":
+            statement = statement.where(Card.user_id == current_user.id)
         cards = session.exec(statement).all()
         return [CardRead.model_validate(c) for c in cards]
 
     @staticmethod
-    def update_card(session: Session, card_id: int, data: dict) -> CardRead:
+    def update_card(
+        session: Session, card_id: int, data: CardUpdate, current_user: User
+    ) -> CardRead:
         card = session.get(Card, card_id)
         if not card or card.deleted_at:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Card not found"
+            )
+
+        if current_user.role != "admin" and card.user_id != current_user.id:
+            raise HTTPException(
+                status_code=403, detail="You do not have permission to update this card"
             )
 
         for k, v in data.items():
@@ -67,12 +84,18 @@ class CardService:
         return CardRead.model_validate(card)
 
     @staticmethod
-    def delete_card(session: Session, card_id: int) -> CardRead:
+    def delete_card(session: Session, card_id: int, current_user: User) -> CardRead:
         card = session.get(Card, card_id)
         if not card or card.deleted_at:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Card not found"
             )
+
+        if current_user.role != "admin" and card.user_id != current_user.id:
+            raise HTTPException(
+                status_code=403, detail="You do not have permission to delete this card"
+            )
+
         card.deleted_at = datetime.now(timezone.utc)
         session.add(card)
         session.commit()
