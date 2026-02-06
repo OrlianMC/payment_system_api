@@ -4,7 +4,7 @@ from sqlmodel import Session
 from typing import List
 from app.models import User
 from app.services import AuthService, CardService
-from app.schemas import CardCreate, CardRead
+from app.schemas import CardCreate, CardRead, CardUpdate
 from app.core.database import get_session
 
 router = APIRouter(prefix="/cards", tags=["Cards"])
@@ -43,7 +43,7 @@ def create_card(
 @router.put("/{card_id}", response_model=CardRead)
 def update_card(
     card_id: int,
-    data: dict,
+    data: CardUpdate,
     session: Session = Depends(get_session),
     current_user: User = Depends(AuthService.require_admin),
 ):

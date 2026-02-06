@@ -12,7 +12,7 @@ Sistema básico de pagos que permite:
 
 Tecnologías utilizadas:
 
-- **Python 3.12** + **FastAPI** para el API principal
+- **Python 3.11.5** + **FastAPI** para el API principal
 - **PostgreSQL** como base de datos
 - **SQLModel** como ORM
 - **Passlib** y **bcrypt** para contraseñas seguras
@@ -29,31 +29,55 @@ payment-system/
 │
 ├── .gitignore
 ├── README.md
+├── requirements.txt
 ├── api_service/
 │   ├── app/
 │   │   ├── core/
 │   │   │   ├── config.py
 │   │   │   ├── database.py
-│   │   │   └── logging.py
+│   │   │   ├── logging.py
+│   │   │   └── security.py
 │   │   ├── models/
-│   │   ├── schemas/
+│   │   │   ├── card_model.py
+│   │   │   ├── payment_model.py
+│   │   │   ├── profile_model.py
+│   │   │   └── user_model.py
 │   │   ├── routes/
+│   │   │   ├── auth_router.py
+│   │   │   ├── card_router.py
+│   │   │   ├── payment_router.py
+│   │   │   ├── profile_router.py
+│   │   │   └── user_router.py
+│   │   ├── schemas/
+│   │   │   ├── card_schemas.py
+│   │   │   ├── payment_schemas.py
+│   │   │   ├── profile_schemas.py
+│   │   │   └── user_schemas.py
 │   │   ├── services/
+│   │   │   ├── auth_service.py
+│   │   │   ├── card_service.py
+│   │   │   ├── payment_service.py
+│   │   │   ├── processor_client.py
+│   │   │   ├── profile_service.py
+│   │   │   └── user_service.py
+│   │   ├── .env
 │   │   └── main.py
-│   └── requirements.txt
 │
 ├── payment_processor/
-├── app/
-│   ├── main.py
-│   ├── core/
-│   │   ├── config.py     
-│   │   └── logging.py
-│   ├── models/
-│   │   └── payment.py        
-│   ├── services/
-│   │   └── payment_service.py
-│   └── routes/
-│       └── payment_routes.py
+│   ├── app/
+│   │   ├── main.py
+│   │   ├── core/
+│   │   │   ├── config.py
+│   │   │   ├── logging.py
+│   │   │   └── security.py
+│   │   ├── routes/
+│   │   │   └── payment_router.py
+│   │   ├── schemas/
+│   │   │   └── payment_schemas.py
+│   │   ├── services/
+│   │   │   └── payment_service.py
+│   │   ├── .env
+│   │   └── main.py
 │
 ├── database/
 │   ├── init.sql
@@ -63,13 +87,13 @@ payment-system/
 └── postman/
 └── collection.json
 
-````
+```
 
 ---
 
 ## ⚙️ Requisitos previos
 
-- Python 3.12+
+- Python 3.11.5+
 - PostgreSQL
 - pip
 - (Opcional) virtualenv
@@ -90,7 +114,7 @@ DB_SSLMODE=require
 
 PROCESSOR_URL=http://localhost:9000/process-payment
 SECRET_KEY=alguna_clave_secreta_para_jwt
-````
+```
 
 ---
 
@@ -111,6 +135,14 @@ psql -U <usuario> -d <nombre_db> -f database/seed.sql
 ---
 
 ## 🏗️ Instalación y ejecución
+
+```bash
+python -m venv venv
+source venv/bin/activate    # Linux/macOS
+venv\Scripts\activate       # Windows
+
+pip install -r requirements.txt
+```
 
 ### 1️⃣ API Service
 
@@ -142,11 +174,6 @@ Docs interactivos: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 
 ```bash
 cd payment_processor
-python -m venv venv
-source venv/bin/activate    # Linux/macOS
-venv\Scripts\activate       # Windows
-
-pip install -r requirements.txt
 uvicorn app.main:app --port 9000
 ```
 
@@ -156,8 +183,8 @@ uvicorn app.main:app --port 9000
 POST /process-payment
 ```
 
-* Recibe: `{ "amount": 100.0 }`
-* Responde: `{ "amount": 100.0, "status": "approved" }` o `"rejected"` (80/20%)
+- Recibe: `{ "amount": 100.0 }`
+- Responde: `{ "amount": 100.0, "status": "approved" }` o `{ "status": "rejected", "reason": "..." }` (80/20%)
 
 ---
 
@@ -172,24 +199,24 @@ POST /process-payment
 
 ## 💡 Buenas prácticas implementadas
 
-* Contraseñas hasheadas con bcrypt
-* Separación de capas (core / routes / models / services)
-* Logging profesional centralizado (`core/logging.py`)
-* Lifespan de FastAPI para inicialización y shutdown
-* Scripts SQL independientes para reproducibilidad
-* CORS configurado para testing
+- Contraseñas hasheadas con bcrypt
+- Separación de capas (core / routes / models / services)
+- Logging profesional centralizado (`core/logging.py`)
+- Lifespan de FastAPI para inicialización y shutdown
+- Scripts SQL independientes para reproducibilidad
+- CORS configurado para testing
 
 ---
 
 ## 📦 Postman
 
-* Carpeta `postman/collection.json` con endpoints listos para pruebas
+- Carpeta `postman/collection.json` con endpoints listos para pruebas
 
 ---
 
 ## 🔗 Enlaces útiles
 
-* [FastAPI](https://fastapi.tiangolo.com/)
-* [SQLModel](https://sqlmodel.tiangolo.com/)
-* [PostgreSQL](https://www.postgresql.org/)
-* [Passlib](https://passlib.readthedocs.io/)
+- [FastAPI](https://fastapi.tiangolo.com/)
+- [SQLModel](https://sqlmodel.tiangolo.com/)
+- [PostgreSQL](https://www.postgresql.org/)
+- [Passlib](https://passlib.readthedocs.io/)

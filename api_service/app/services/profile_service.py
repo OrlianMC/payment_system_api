@@ -11,14 +11,14 @@ from .user_service import UserService
 class ProfileService:
 
     @staticmethod
-    def get_profile(session: Session, current_user: User) -> ProfileRead:
-        user = UserService.get_by_id(session, current_user.id)
+    def get_profile(session: Session, user_id: str, current_user: User) -> ProfileRead:
+        user = UserService.get_by_id(session, user_id)
         if not user.profile:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found"
             )
 
-        if current_user.role != "admin" and current_user.id != current_user.id:
+        if current_user.role != "admin" and current_user.id != user_id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You do not have permission to access this profile",
