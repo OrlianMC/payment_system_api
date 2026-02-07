@@ -36,14 +36,23 @@ class PaymentService:
                 detail="The card does not belong to the user",
             )
 
-        if getattr(payment_data, "idempotency_key", None):
+        if payment_data.idempotency_key:
             existing = self.session.exec(
                 select(Payment).where(
-                    Payment.idempotency_key == payment_data.idempotency_key
+                    Payment.idempotency_key == payment_data.idempotency_key,
+                    Payment.deleted_at == None,
                 )
             ).first()
+
             if existing:
-                return PaymentRead.model_validate(existing)
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail={
+                        "message": "Payment with this idempotency key already exists",
+                        "payment_id": existing.id,
+                        "status": existing.status,
+                    },
+                )
 
         payment = Payment(
             user_id=current_user.id,

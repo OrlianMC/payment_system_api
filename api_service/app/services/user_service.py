@@ -69,8 +69,15 @@ class UserService:
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You do not have permission to update this user",
             )
+        if UserService.get_by_email(session, data.email):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="User email already exists",
+            )
 
-        for k, v in data.items():
+        update_data = data.model_dump(exclude_unset=True)
+
+        for k, v in update_data.items():
             setattr(user, k, v)
         user.updated_at = datetime.now(timezone.utc)
         session.add(user)

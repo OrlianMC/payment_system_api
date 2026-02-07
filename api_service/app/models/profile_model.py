@@ -10,7 +10,7 @@ class Profile(SQLModel, table=True):
     __tablename__ = "profiles"
 
     id: Optional[int] = Field(default=None, primary_key=True)
-    user_id: int = Field(foreign_key="users.id", nullable=False, unique=True)
+    user_id: int = Field(foreign_key="users.id", nullable=False)
 
     name: Optional[str] = None
     last_name: Optional[str] = None

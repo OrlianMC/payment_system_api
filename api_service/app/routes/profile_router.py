@@ -18,12 +18,12 @@ def list_profiles(
     return ProfileService.list_profiles(session, current_user)
 
 
-@router.get("/me", response_model=List[ProfileRead])
+@router.get("/me", response_model=ProfileRead)
 def my_profile(
     session: Session = Depends(get_session),
     current_user: User = Depends(AuthService.get_current_user),
 ):
-    return ProfileService.get_profile(session, current_user)
+    return ProfileService.get_profile(session, current_user.id, current_user)
 
 
 @router.get("/{user_id}", response_model=ProfileRead)
@@ -35,14 +35,13 @@ def get_profile(
     return ProfileService.get_profile(session, user_id, current_user)
 
 
-@router.post("/{user_id}", response_model=ProfileRead)
+@router.post("/", response_model=ProfileRead)
 def create_profile(
-    user_id: int,
     profile_data: ProfileCreate,
     session: Session = Depends(get_session),
     current_user: User = Depends(AuthService.get_current_user),
 ):
-    return ProfileService.create_profile(session, user_id, profile_data, current_user)
+    return ProfileService.create_profile(session, profile_data, current_user)
 
 
 @router.put("/{user_id}", response_model=ProfileRead)

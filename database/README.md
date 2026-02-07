@@ -8,9 +8,9 @@ Esta carpeta contiene los scripts necesarios para inicializar y poblar la base d
 
 Crea las tablas principales:
 
-- `usuarios` → almacena los usuarios del sistema.
-- `tarjetas` → tarjetas asociadas a los usuarios (solo datos ficticios).
-- `pagos` → historial de pagos asociados a usuarios y tarjetas.
+- `users` → almacena los usuarios del sistema.
+- `card` → tarjetas asociadas a los usuarios (solo datos ficticios).
+- `payments` → historial de pagos asociados a usuarios y tarjetas.
 
 ### Uso
 
